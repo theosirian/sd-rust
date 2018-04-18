@@ -1,5 +1,5 @@
 [package]
-name = "sd-second"
+name = "sd-rust"
 version = "0.1.0"
 authors = ["Tiago Nascimento <tiago@theosirian.com>"]
 
