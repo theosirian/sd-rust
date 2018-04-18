@@ -1,0 +1,27 @@
+[package]
+name = "sd-second"
+version = "0.1.0"
+authors = ["Tiago Nascimento <tiago@theosirian.com>"]
+
+[dependencies]
+tokio = "0.1"
+tokio-io = "0.1"
+futures = "0.1"
+bytes = "0.4"
+either = "1.4"
+
+[[bin]]
+name = "publisher"
+path = "src/publisher/main.rs"
+
+[[bin]]
+name = "subscriber"
+path = "src/subscriber/main.rs"
+
+[[bin]]
+name = "router"
+path = "src/router/main.rs"
+
+[[bin]]
+name = "hex"
+path = "src/hex/main.rs"
