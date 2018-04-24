@@ -6,7 +6,7 @@ extern crate either;
 extern crate futures;
 extern crate tokio;
 
-use bytes::{BigEndian, BufMut, Bytes, BytesMut};
+use bytes::{BufMut, Bytes, BytesMut};
 use either::*;
 use futures::sync::mpsc;
 use tokio::io;
@@ -95,28 +95,35 @@ impl Future for Subscriber {
         for i in 0..MAX_FRAMES_PER_TICK {
             match self.rx.poll().unwrap() {
                 Async::Ready(Some(v)) => {
-                    if v.len() > 0 {
-                        if v[0] == 0x00 {
-                            println!("[server] QUIT to {:?}", self.addr);
-                            self.frames.buffer(&v);
-                            let _ = self.frames.poll_flush()?;
-                            return Ok(Async::Ready(()));
-                        } else if v.len() > 1 {
-                            match v[1] {
-                                0x00 | 0x01 | 0x02 | 0x03 | 0x04 => {
-                                    println!("[server] EVENT to {:?}", self.addr);
-                                    self.frames.buffer(&v);
-                                }
-                                _ => {
-                                    println!("[server] ERROR: wrong internal message {:?}", v);
-                                }
+                    if v.len() == 0 {
+                        println!("[server] ERROR: empty internal message {:?}", v);
+                        continue;
+                    }
+                    if v[0] == 0x00 {
+                        println!("[server] QUIT to {:?}", self.addr);
+                        self.frames.buffer(&v);
+                        let _ = self.frames.poll_flush()?;
+                        return Ok(Async::Ready(()));
+                    }
+                    if v.len() == 1 {
+                        println!("[server] ERROR: wrong internal message {:?}", v);
+                        continue;
+                    }
+                    match sd_rust::EventType::from_opcode(v[1]) {
+                        Some(event) => {
+                            if self.subscriptions.contains(&event) {
+                                println!("[server] EVENT to {:?}", self.addr);
+                                self.frames.buffer(&v);
+                            } else {
+                                println!(
+                                    "[server] {:?} is not subscribed to {:?}",
+                                    self.addr, event
+                                );
                             }
-                        } else {
+                        }
+                        None => {
                             println!("[server] ERROR: wrong internal message {:?}", v);
                         }
-                    } else {
-                        unreachable!();
-                        println!("[server] ERROR: empty internal message {:?}", v);
                     }
                     if i + 1 == MAX_FRAMES_PER_TICK {
                         task::current().notify();
@@ -131,14 +138,21 @@ impl Future for Subscriber {
             if let Some(message) = frame {
                 match protocol(message.clone()) {
                     Ok(Either::Left(event)) => {
-                        self.subscriptions.push(event.clone());
-                        println!(
-                            "[{:?}] {:X} => add = {:?}, subs = {:?}",
-                            self.addr,
-                            PrintBytes(message),
-                            event,
-                            self.subscriptions
-                        );
+                        if self.subscriptions.contains(&event) {
+                            println!(
+                                "[{:?}] already subbed to {:?}, subs = {:?}",
+                                self.addr, event, self.subscriptions
+                            );
+                        } else {
+                            self.subscriptions.push(event.clone());
+                            println!(
+                                "[{:?}] {:X} => add = {:?}, subs = {:?}",
+                                self.addr,
+                                PrintBytes(message),
+                                event,
+                                self.subscriptions
+                            );
+                        }
                     }
                     Ok(Either::Right(event)) => {
                         self.subscriptions.remove_item(&event);
@@ -236,11 +250,11 @@ impl Stream for Frames {
 
 fn protocol(frame: BytesMut) -> Result<Either<sd_rust::EventType, sd_rust::EventType>, io::Error> {
     let event = match frame[1] {
-        0 => sd_rust::EventType::PointerConnected,
-        1 => sd_rust::EventType::PointerDisconnected,
-        2 => sd_rust::EventType::PointerDown,
-        3 => sd_rust::EventType::PointerUp,
-        4 => sd_rust::EventType::PointerMove,
+        0x00 => sd_rust::EventType::PointerConnected,
+        0x01 => sd_rust::EventType::PointerDisconnected,
+        0x02 => sd_rust::EventType::PointerDown,
+        0x03 => sd_rust::EventType::PointerUp,
+        0x04 => sd_rust::EventType::PointerMove,
         _ => {
             return Err(Error::new(
                 ErrorKind::Other,
@@ -249,8 +263,8 @@ fn protocol(frame: BytesMut) -> Result<Either<sd_rust::EventType, sd_rust::Event
         }
     };
     match frame[0] {
-        0 => Ok(Either::Left(event)),
-        1 => Ok(Either::Right(event)),
+        0x00 => Ok(Either::Left(event)),
+        0x01 => Ok(Either::Right(event)),
         _ => Err(Error::new(
             ErrorKind::Other,
             format!("[server] ERROR: Invalid frame received: {:?}", frame),
@@ -366,11 +380,8 @@ fn main() {
                 println!("[server] PRESSED (5)!");
             }
             b'q' | b'Q' => {
-                let mut quit = BytesMut::new();
-                quit.extend_from_slice(b"\x00");
-                send(quit.freeze());
                 println!("[server] PRESSED (Q)!");
-                //break 'input;
+                break 'input;
             }
             _ => {
                 continue;

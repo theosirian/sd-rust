@@ -12,6 +12,17 @@ pub enum EventType {
 }
 
 impl EventType {
+    pub fn from_opcode(opcode: u8) -> Option<EventType> {
+        match opcode {
+            0x00 => Some(EventType::PointerConnected),
+            0x01 => Some(EventType::PointerDisconnected),
+            0x02 => Some(EventType::PointerDown),
+            0x03 => Some(EventType::PointerUp),
+            0x04 => Some(EventType::PointerMove),
+            _ => None,
+        }
+    }
+
     pub fn bytes(&self, opcode: u8) -> Bytes {
         let mut bytes: BytesMut;
         match self {

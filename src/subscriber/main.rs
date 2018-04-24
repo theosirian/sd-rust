@@ -93,6 +93,10 @@ fn main() {
         }
     };
 
+    let mut hello = bytes::BytesMut::new();
+    hello.extend_from_slice(b"\x01");
+    tx = send(tx, hello.freeze());
+
     let mut selection: Option<sd_rust::EventType> = None;
     'input: loop {
         let mut buf: [u8; 1] = [0];
