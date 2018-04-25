@@ -19,9 +19,5 @@ name = "subscriber"
 path = "src/subscriber/main.rs"
 
 [[bin]]
-name = "router"
-path = "src/router/main.rs"
-
-[[bin]]
 name = "hex"
 path = "src/hex/main.rs"
