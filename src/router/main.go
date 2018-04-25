@@ -107,7 +107,7 @@ func router(conn net.Conn) {
 		read, err := bufferize(conn, 8)
 		if err != nil {
 			log.Printf("[%v] ERROR %v", label, err)
-			return
+			break
 		}
 		buf = append(buf, read...)
 		for {
@@ -176,7 +176,7 @@ func subscriber(conn net.Conn) {
 		read, err := bufferize(conn, 8)
 		if err != nil {
 			log.Printf("[%v] ERROR %v", label, err)
-			return
+			break
 		}
 		buf = append(buf, read...)
 		for {
@@ -191,7 +191,6 @@ func subscriber(conn net.Conn) {
 						subscriptions[msg[1]] = append(subscriptions[msg[1]], comm)
 						for _, ch := range routers {
 							ch <- msg
-							log.Printf("something!")
 						}
 						log.Printf("[%v] SUBBING %v %v", label, msg, subscriptions)
 					}
