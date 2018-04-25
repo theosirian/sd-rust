@@ -94,7 +94,7 @@ fn main() {
     };
 
     let mut hello = bytes::BytesMut::new();
-    hello.extend_from_slice(b"\x01");
+    hello.extend_from_slice(b"\x02\x00\x01");
     tx = send(tx, hello.freeze());
 
     let mut selection: Option<sd_rust::EventType> = None;
@@ -124,7 +124,7 @@ fn main() {
             }
             b's' => {
                 if let Some(event) = selection {
-                    tx = send(tx, event.bytes(0));
+                    tx = send(tx, event.bytes(1));
                     println!("[client] SUB TO {:?}", event);
                 } else {
                     println!("[client] NO EVENT SELECTED, CANNOT SUB");
@@ -132,7 +132,7 @@ fn main() {
             }
             b'u' => {
                 if let Some(event) = selection {
-                    tx = send(tx, event.bytes(1));
+                    tx = send(tx, event.bytes(2));
                     println!("[client] UNSUB TO {:?}", event);
                 } else {
                     println!("[client] NO EVENT SELECTED, CANNOT SUB");

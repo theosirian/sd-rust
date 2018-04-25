@@ -98,17 +98,19 @@ impl EventData {
         let mut bytes: BytesMut;
         match self {
             &EventData::PointerConnected(id) => {
-                let size = 2u8;
+                let size = 3u8;
                 bytes = BytesMut::with_capacity((size + 1) as usize);
                 bytes.put(size); // SIZE
-                bytes.put(0u8); // OPCODE
+                bytes.put(3u8); // OPCODE
+                bytes.put(0u8); // EVENT
                 bytes.put(id); // POINTER ID
             }
             &EventData::PointerDisconnected(id) => {
-                let size = 2u8;
+                let size = 3u8;
                 bytes = BytesMut::with_capacity((size + 1) as usize);
                 bytes.put(size); // SIZE
-                bytes.put(1u8); // OPCODE
+                bytes.put(3u8); // OPCODE
+                bytes.put(1u8); // EVENT
                 bytes.put(id); // POINTER ID
             }
             &EventData::PointerDown {
@@ -117,10 +119,11 @@ impl EventData {
                 x,
                 y,
             } => {
-                let size = 7u8;
+                let size = 8u8;
                 bytes = BytesMut::with_capacity((size + 1) as usize);
                 bytes.put(size); // SIZE
-                bytes.put(2u8); // OPCODE
+                bytes.put(3u8); // OPCODE
+                bytes.put(2u8); // EVENT
                 bytes.put(pointer); // POINTER ID
                 bytes.put(button); // BUTTON INDEX
                 bytes.put_i16::<BigEndian>(x); // X COORD
@@ -132,10 +135,11 @@ impl EventData {
                 x,
                 y,
             } => {
-                let size = 7u8;
+                let size = 8u8;
                 bytes = BytesMut::with_capacity((size + 1) as usize);
                 bytes.put(size); // SIZE
                 bytes.put(3u8); // OPCODE
+                bytes.put(3u8); // EVENT
                 bytes.put(pointer); // POINTER ID
                 bytes.put(button); // BUTTON INDEX
                 bytes.put_i16::<BigEndian>(x); // X COORD
@@ -147,10 +151,11 @@ impl EventData {
                 x,
                 y,
             } => {
-                let size = 7u8;
+                let size = 8u8;
                 bytes = BytesMut::with_capacity((size + 1) as usize);
                 bytes.put(size); // SIZE
-                bytes.put(4u8); // OPCODE
+                bytes.put(3u8); // OPCODE
+                bytes.put(4u8); // EVENT
                 bytes.put(pointer); // POINTER ID
                 bytes.put(button); // BUTTON INDEX
                 bytes.put_i16::<BigEndian>(x); // X COORD
