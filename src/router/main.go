@@ -42,6 +42,7 @@ func frame(buf []byte) (byte, []byte, []byte) {
 	}
 	return 0, nil, nil
 }
+
 func writer(conn net.Conn, comm <-chan []byte, label string, quit <-chan bool) {
 	for {
 		select {
@@ -140,10 +141,14 @@ func router(conn net.Conn) {
 
 				case 0x03:
 					for _, ch := range subscriptions[msg[1]] {
-						ch <- msg
+						if ch != comm {
+							ch <- msg
+						}
 					}
 					for _, ch := range routing[msg[1]] {
-						ch <- msg
+						if ch != comm {
+							ch <- msg
+						}
 					}
 					log.Printf("[%v] ROUTING %v", label, msg)
 
